@@ -1,0 +1,289 @@
+---
+title: "Zumwalt Tablet data processing"
+author: "Alexander Traynor"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+
+---
+
+# Import Height Weight Data
+
+```{r setup}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(magrittr)
+```
+
+# write code to tidy data
+# make into function
+# loop function over files in directory
+
+```{r}
+folder <- "C:\\Users\\Alexander\\OneDrive - University of Idaho\\UI\\Thesis\\Grouse and Grazing\\Zumult\\Data Analysis\\test"
+```
+
+# Import functions
+```{r}
+import_hw <- function(folder){
+metadata <- readxl::read_xlsx(path = folder,
+                          sheet = 1, 
+                          range = "A1:O3", 
+                          col_names = FALSE)
+
+metadata <- metadata[,c(1,4,9,10)]
+metadata1 <- metadata[,c(1,2)]
+metadata1 <- metadata1 %>% 
+  spread(key = "...1", value = "...4")
+
+metadata2 <- metadata[,c(3,4)]
+metadata2 <- metadata2 %>% 
+  spread(key = "...9", value = "...10")
+
+hw_metadata <- cbind(metadata1,metadata2)
+
+hw_data <- readxl::read_xlsx(path = folder,
+                          sheet = 1, 
+                          range = "A6:O34", 
+                          col_names = FALSE)
+
+hw_data <- hw_data[c(4:29),]
+colnames(hw_data) <- as.character(unlist(hw_data[1,]))
+hw_data <- hw_data[-1,]
+t1 <- hw_data[,1:5]
+t1$Transect <- 1
+t2 <- hw_data[,6:10]
+t2$Transect <- 2
+t3 <- hw_data[,11:15]
+t3$Transect <- 3
+
+hw_data <- rbind(t1,t2,t3)
+
+hw_plotdata <- cbind(hw_metadata,hw_data)
+
+rm(hw_data,hw_metadata,metadata,metadata1,metadata2,t1,t2,t3)
+
+hw_list <- list()
+plot <- hw_plotdata[1,2]
+hw_list[[plot]] <- hw_plotdata
+return(hw_list)
+}
+
+import_la <- function(folder){
+la_metadata <- readxl::read_xlsx(path = folder,
+                          sheet = 2, 
+                          range = "A1:E4", 
+                          col_names = FALSE)
+
+metadata <- la_metadata[,-3]
+metadata1 <- metadata[,c(1,2)]
+metadata1 <- metadata1 %>% 
+  spread(key = "...1", value = "...2")
+
+metadata2 <- metadata[,c(3,4)]
+metadata2 <- metadata2 %>% 
+  spread(key = "...4", value = "...5")
+metadata2 <- metadata2[,1:3]
+
+la_metadata <- cbind(metadata1,metadata2)
+
+la_data <- readxl::read_xlsx(path = folder,
+                          sheet = 2, 
+                          range = "A6:F7", 
+                          col_names = FALSE)
+la_data <- t(la_data)
+
+colnames(la_data) <- as.character(unlist(la_data[1,]))
+la_data <- la_data[-1,]
+
+la_plotdata <- cbind(la_data, la_metadata)
+rm(la_data,metadata,metadata1, metadata2,la_metadata)
+
+la_list <- list()
+plot <- la_plotdata[1,2]
+la_list[[plot]] <- la_plotdata
+return(la_list)
+}
+
+import_lpi <- function(folder){
+lpi_metadata <- readxl::read_xlsx(path = folder,
+                          sheet = 3, 
+                          range = "A1:E3", 
+                          col_names = FALSE)
+
+metadata <- lpi_metadata[,-3]
+metadata1 <- metadata[,c(1,2)]
+metadata1 <- metadata1 %>% 
+  spread(key = "...1", value = "...2")
+
+metadata2 <- metadata[,c(3,4)]
+metadata2 <- metadata2 %>% 
+  spread(key = "...4", value = "...5")
+metadata2 <- metadata2[,1:3]
+
+lpi_metadata <- cbind(metadata1,metadata2)
+
+lpi_data <- readxl::read_xlsx(path = folder,
+                          sheet = 3, 
+                          range = "A6:U57", 
+                          col_names = FALSE)
+
+lpi_data <- lpi_data[-2,]
+colnames(lpi_data) <- as.character(unlist(lpi_data[1,]))
+lpi_data <- lpi_data[-1,]
+
+t1 <- lpi_data[,1:7]
+t1$Transect <- 1
+t2 <- lpi_data[,8:14]
+t2$Transect <- 2
+t3 <- lpi_data[,15:21]
+t3$Transect <- 3
+
+lpi_data <- rbind(t1,t2,t3)
+
+lpi_plotdata <- cbind(lpi_metadata,lpi_data)
+rm(t1,t2,t3,metadata,metadata1,metadata2,lpi_metadata,lpi_data)
+
+lpi_list <- list()
+plot <- lpi_plotdata[1,2]
+lpi_list[[plot]] <- lpi_plotdata
+return(lpi_list)
+}
+
+import_clip <- function(folder){
+clip_metadata <- readxl::read_xlsx(path = folder,
+                          sheet = 4, 
+                          range = "A1:E3", 
+                          col_names = FALSE)
+
+metadata <- clip_metadata[,-3]
+metadata1 <- metadata[,c(1,2)]
+metadata1 <- metadata1 %>% 
+  spread(key = "...1", value = "...2")
+
+metadata2 <- metadata[,c(3,4)]
+metadata2 <- metadata2 %>% 
+  spread(key = "...4", value = "...5")
+metadata2 <- metadata2[,1:3]
+
+clip_metadata <- cbind(metadata1,metadata2)
+
+clip_data <- readxl::read_xlsx(path = folder,
+                          sheet = 4, 
+                          range = "A6:M15", 
+                          col_names = FALSE)
+
+clip_data <- clip_data[,-c(3,5,7,10,12)]
+colnames(clip_data) <- c("Species","BagWeight","BiomassWetWeight","BagandBiomass","Species","BagWeight","BiomassWetWeight","BagandBiomass")
+clip_data <- clip_data[-1,]
+
+caged <- clip_data[,1:4]
+caged$Subplot <- "caged"
+uncaged <- clip_data[,5:8]
+uncaged$Subplot <- "uncaged"
+
+clip_data <- rbind(caged,uncaged)
+# Might want to automatically clean out NAs here?
+
+clip_plotdata <- cbind(clip_metadata, clip_data)
+rm(clip_data,clip_metadata,caged,uncaged,metadata,metadata1,metadata2)
+
+clip_list <- list()
+plot <- clip_plotdata[1,2]
+if(stringr::str_detect(plot, "Site.*")==TRUE){
+clip_list[[plot]] <- clip_plotdata
+return(clip_list)
+} else {
+return(clip_list)
+}}
+```
+
+# Unpack Clip
+```{r}
+unpack_clip <- function(folder){
+files <- list.files(path=folder, pattern="*.xlsx", full.names=TRUE, recursive=FALSE)
+ls <- list()
+all_clip <- lapply(files, function(x){
+  ls[[x]] <- import_clip(folder = x)
+  })
+all_clip <- unlist(all_clip, recursive = FALSE)
+all_clip <- do.call(rbind, all_clip)
+# fix variable types
+all_clip$Block <- as.factor(all_clip$Block)
+all_clip$PlotID <- as.factor(all_clip$PlotID)
+all_clip$Treatment <- as.factor(all_clip$Treatment)
+all_clip$Date <- as.Date(as.numeric(all_clip$Date), origin = "1899-12-30")
+all_clip$Observer <- as.factor(all_clip$Observer)
+all_clip$Recorder <- as.factor(all_clip$Recorder)
+all_clip$Species <- as.factor(all_clip$Species)
+all_clip$BagWeight <- as.numeric(all_clip$BagWeight)
+all_clip$BiomassWetWeight <- as.numeric(all_clip$BiomassWetWeight)
+all_clip$BagandBiomass <- as.numeric(all_clip$BagandBiomass)
+all_clip$Subplot <- as.factor(all_clip$Subplot)
+return(all_clip)
+}
+```
+
+# Unpack LPI
+```{r}
+unpack_lpi <- function(folder){
+files <- list.files(path=folder, pattern="*.xlsx", full.names=TRUE, recursive=FALSE)
+ls <- list()
+all_lpi <- lapply(files, function(x){
+  ls[[x]] <- import_lpi(folder = x)
+  })
+all_lpi <- unlist(all_lpi, recursive = FALSE)
+all_lpi <- do.call(rbind, all_lpi)
+
+all_lpi[,c(1:3,5:14)] %<>% mutate_if(is.character,as.factor)
+all_lpi$Date <-as.Date(as.numeric(all_lpi$Date), origin = "1899-12-30")
+
+return(all_lpi)
+}
+```
+
+# Unpack HW
+```{r}
+unpack_hw <- function(folder){
+files <- list.files(path=folder, pattern="*.xlsx", full.names=TRUE, recursive=FALSE)
+ls <- list()
+all_hw <- lapply(files, function(x){
+  ls[[x]] <- import_hw(folder = x)
+  })
+all_hw <- unlist(all_hw, recursive = FALSE)
+all_hw <- do.call(rbind, all_hw)
+
+all_hw[,c(1:3,5:8,12)] %<>% mutate_if(is.character,as.factor)
+all_hw$Date <-as.Date(as.numeric(all_hw$Date), origin = "1899-12-30")
+all_hw[,c(9:11)] %<>% mutate_if(is.character,as.numeric)
+all_hw$Transect <- as.factor(all_hw$Transect)
+
+return(all_hw)
+}
+```
+
+# Unpack LA
+```{r}
+unpack_la <- function(folder){
+files <- list.files(path=folder, pattern="*.xlsx", full.names=TRUE, recursive=FALSE)
+ls <- list()
+all_la <- lapply(files, function(x){
+  ls[[x]] <- import_la(folder = x)
+  })
+all_la <- unlist(all_la, recursive = FALSE)
+all_la <- do.call(rbind, all_la)
+
+all_la[,c(3:6,8:9)] %<>% mutate_if(is.character,as.factor)
+all_la$Date <-as.Date(as.numeric(all_la$Date), origin = "1899-12-30")
+return(all_la)
+}
+
+```
+
+
+
+
+

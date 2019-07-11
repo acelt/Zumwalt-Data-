@@ -1,0 +1,46 @@
+---
+title: "Zumwalt Summaries"
+author: "Alexander Traynor"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+# Summary stats
+Clip data
+
+```{r}
+folder <- "C:\\Users\\Alexander\\OneDrive - University of Idaho\\Email attachments\\CIG Biomass 2019\\Zumwalt\\Data\\"
+clip_test <- unpack_clip(folder)
+
+# not looking at species but removing non-forage functional groups:
+clip_plot_summary <- clip_test %>%
+  select(-c(BagWeight,BagandBiomass))%>%
+  filter(!is.na(BiomassWetWeight))%>%
+  spread(key = Subplot, value = BiomassWetWeight) %>%
+  filter(Species != "AF",
+         Species != "AG",
+         Species != "PF",
+         !is.na(Species))%>%
+  group_by(PlotID, Treatment, Block)%>%
+  summarise(TotalCaged = sum(caged), TotalUncaged = sum(uncaged))%>%
+  mutate(Total_Util = (TotalCaged-TotalUncaged)/TotalCaged*100)
+```
+
+LPI data
+need help from DIMA tools
+```{r}
+lpi_test <- unpack_lpi(folder)%>%
+  gather(8:11, key = Layer, value = Code) %>%
+  group_by(Block,PlotID, Treatment, Layer, Code, Point, `Soil Surface`) %>%
+  summarise(present = if(any(!is.na(Code) & Code != "n/a")){1} else {0}) %>%
+  dplyr::ungroup() %>% dplyr::group_by(PlotID, Code) %>%
+  dplyr::summarize(percent = 100*sum(present)/150) %>%
+  dplyr::filter(!grepl(Code, pattern = "n/a")) %>%
+  tidyr::spread(key = Code, value = percent, fill = 0)
+
+# need to modify for calculating bare soil and grazing
+```
+
